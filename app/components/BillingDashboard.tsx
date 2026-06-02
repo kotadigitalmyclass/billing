@@ -8,7 +8,7 @@ import {
   TrendingUp, AlertCircle, Clock, DollarSign,
   ArrowUpDown, ArrowUp, ArrowDown, Printer,
   Users, Package, BarChart3, CreditCard,
-  FileText, ChevronUp, ChevronDown,
+  FileText, ChevronUp, ChevronDown, Share2,
 } from "lucide-react";
 import InvoiceForm from "./InvoiceForm";
 import Sidebar from "./Sidebar";
@@ -48,6 +48,26 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+// ─── WhatsApp Share ────────────────────────────────────────────
+function shareOnWhatsApp(invoice: Invoice) {
+  const itemsText = (invoice.items || [])
+    .map(it => `  • ${it.description} × ${it.quantity} = ₹${it.amount.toLocaleString()}`)
+    .join("\n");
+
+  const text = `🏪 *Aaradhya Fancy Dresses*
+📄 *Invoice:* ${invoice.invoiceNumber}
+👤 *Customer:* ${invoice.customerName}${invoice.mobile ? `\n📞 +91 ${invoice.mobile}` : ""}
+💰 *Amount:* ₹${invoice.amount.toLocaleString()}${invoice.depositAmount ? `\n💳 Deposit: ₹${invoice.depositAmount.toLocaleString()}` : ""}
+📊 *Status:* ${invoice.status}
+📅 *Due:* ${new Date(invoice.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+💳 *Payment:* ${invoice.paymentMode}
+${itemsText ? `\n*Items:*\n${itemsText}` : ""}
+${invoice.notes ? `\n📝 *Notes:* ${invoice.notes}` : ""}`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
 }
 
 // ─── Confirm Dialog ────────────────────────────────────────────
@@ -219,10 +239,14 @@ function InvoiceViewModal({ invoice, onClose, onEdit, onStatusChange }: {
         </div>
 
         {/* Footer */}
-        <div className="modal-footer">
+        <div className="modal-footer" style={{ gap: 8 }}>
           <Button variant="outline" onPress={handlePrint}>
             <Printer size={14} />
             Print / PDF
+          </Button>
+          <Button variant="outline" onPress={() => shareOnWhatsApp(invoice)}>
+            <Share2 size={14} color="#25D366" />
+            WhatsApp
           </Button>
           {invoice.status !== "Paid" && (
             <Button variant="secondary" onPress={() => { onStatusChange(invoice._id, "Paid"); onClose(); }}>
@@ -251,9 +275,9 @@ function DashboardTab({ invoices, onCreateNew }: { invoices: Invoice[]; onCreate
   const recent = [...invoices].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="tab-content">
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12, marginBottom: 20 }}>
         <StatCard icon={<DollarSign size={20} color="#3b82f6" />} label="Total Revenue" value={`₹${total.toLocaleString()}`} sub={`${invoices.length} invoices`} accent="#eff6ff" border="#bfdbfe" textColor="#1d4ed8" />
         <StatCard icon={<CheckCircle2 size={20} color="#16a34a" />} label="Collected" value={`₹${paid.toLocaleString()}`} sub={`${invoices.filter(i => i.status === "Paid").length} paid`} accent="#f0fdf4" border="#bbf7d0" textColor="#15803d" />
         <StatCard icon={<Clock size={20} color="#ca8a04" />} label="Pending" value={`₹${pending.toLocaleString()}`} sub={`${invoices.filter(i => i.status === "Pending").length} invoices`} accent="#fefce8" border="#fde68a" textColor="#a16207" />
@@ -277,30 +301,51 @@ function DashboardTab({ invoices, onCreateNew }: { invoices: Invoice[]; onCreate
             </div>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="inv-table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: "default" }}>Invoice #</th>
-                  <th style={{ cursor: "default" }}>Customer</th>
-                  <th style={{ cursor: "default" }}>Amount</th>
-                  <th style={{ cursor: "default" }}>Status</th>
-                  <th style={{ cursor: "default" }}>Due Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map(inv => (
-                  <tr key={inv._id} className={inv.status === "Overdue" ? "row-overdue" : ""}>
-                    <td style={{ fontWeight: 700, color: "#3b82f6", fontSize: 13 }}>{inv.invoiceNumber}</td>
-                    <td style={{ fontWeight: 500, fontSize: 13 }}>{inv.customerName}</td>
-                    <td style={{ fontWeight: 700, fontSize: 14 }}>₹{inv.amount.toLocaleString()}</td>
-                    <td><StatusBadge status={inv.status} /></td>
-                    <td style={{ fontSize: 13, color: "#64748b" }}>{new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+          <>
+            {/* Desktop table */}
+            <div className="desktop-table" style={{ overflowX: "auto" }}>
+              <table className="inv-table">
+                <thead>
+                  <tr>
+                    <th style={{ cursor: "default" }}>Invoice #</th>
+                    <th style={{ cursor: "default" }}>Customer</th>
+                    <th style={{ cursor: "default" }}>Amount</th>
+                    <th style={{ cursor: "default" }}>Status</th>
+                    <th style={{ cursor: "default" }}>Due Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recent.map(inv => (
+                    <tr key={inv._id} className={inv.status === "Overdue" ? "row-overdue" : ""}>
+                      <td style={{ fontWeight: 700, color: "#3b82f6", fontSize: 13 }}>{inv.invoiceNumber}</td>
+                      <td style={{ fontWeight: 500, fontSize: 13 }}>{inv.customerName}</td>
+                      <td style={{ fontWeight: 700, fontSize: 14 }}>₹{inv.amount.toLocaleString()}</td>
+                      <td><StatusBadge status={inv.status} /></td>
+                      <td style={{ fontSize: 13, color: "#64748b" }}>{new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="mobile-cards">
+              {recent.map(inv => (
+                <div key={inv._id} className="mobile-card" style={inv.status === "Overdue" ? { borderColor: "#fca5a5", background: "#fff5f5" } : {}}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                    <span style={{ fontWeight: 700, color: "#3b82f6", fontSize: 12 }}>{inv.invoiceNumber}</span>
+                    <StatusBadge status={inv.status} />
+                  </div>
+                  <p style={{ fontWeight: 600, fontSize: 14, color: "#0f172a", marginBottom: 4 }}>{inv.customerName}</p>
+                  <p style={{ fontWeight: 900, fontSize: 16, color: "#0f172a", marginBottom: 4 }}>₹{inv.amount.toLocaleString()}</p>
+                  <p style={{ fontSize: 12, color: "#94a3b8" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ marginRight: 3, verticalAlign: "middle" }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -337,9 +382,9 @@ function CustomersTab({ invoices }: { invoices: Invoice[] }) {
   }, [invoices]);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="tab-content">
       <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
           <Users size={16} color="#3b82f6" />
           <span style={{ fontWeight: 700, fontSize: 14 }}>All Customers ({customers.length})</span>
         </div>
@@ -349,32 +394,62 @@ function CustomersTab({ invoices }: { invoices: Invoice[] }) {
             <p style={{ marginTop: 12, color: "#94a3b8", fontSize: 14 }}>No customers yet</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="inv-table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: "default" }}>Customer Name</th>
-                  <th style={{ cursor: "default" }}>Institution</th>
-                  <th style={{ cursor: "default" }}>Mobile</th>
-                  <th style={{ cursor: "default" }}>Orders</th>
-                  <th style={{ cursor: "default" }}>Total Billed</th>
-                  <th style={{ cursor: "default" }}>Last Invoice</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((c, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 600, color: "#0f172a", fontSize: 13 }}>{c.name}</td>
-                    <td style={{ fontSize: 12, color: "#64748b" }}>{c.institution || "—"}</td>
-                    <td style={{ fontSize: 12, color: "#64748b" }}>{c.mobile ? `+91 ${c.mobile}` : "—"}</td>
-                    <td style={{ fontWeight: 600, fontSize: 13 }}>{c.count}</td>
-                    <td style={{ fontWeight: 700, color: "#2563eb", fontSize: 14 }}>₹{c.total.toLocaleString()}</td>
-                    <td style={{ fontSize: 12, color: "#64748b" }}>{new Date(c.lastInvoice).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+          <>
+            {/* Desktop table */}
+            <div className="desktop-table" style={{ overflowX: "auto" }}>
+              <table className="inv-table">
+                <thead>
+                  <tr>
+                    <th style={{ cursor: "default" }}>Customer Name</th>
+                    <th style={{ cursor: "default" }}>Institution</th>
+                    <th style={{ cursor: "default" }}>Mobile</th>
+                    <th style={{ cursor: "default" }}>Orders</th>
+                    <th style={{ cursor: "default" }}>Total Billed</th>
+                    <th style={{ cursor: "default" }}>Last Invoice</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {customers.map((c, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600, color: "#0f172a", fontSize: 13 }}>{c.name}</td>
+                      <td style={{ fontSize: 12, color: "#64748b" }}>{c.institution || "—"}</td>
+                      <td style={{ fontSize: 12, color: "#64748b" }}>{c.mobile ? `+91 ${c.mobile}` : "—"}</td>
+                      <td style={{ fontWeight: 600, fontSize: 13 }}>{c.count}</td>
+                      <td style={{ fontWeight: 700, color: "#2563eb", fontSize: 14 }}>₹{c.total.toLocaleString()}</td>
+                      <td style={{ fontSize: 12, color: "#64748b" }}>{new Date(c.lastInvoice).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="mobile-cards">
+              {customers.map((c, i) => (
+                <div key={i} className="mini-card">
+                  <p style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", marginBottom: 6 }}>{c.name}</p>
+                  {c.institution && <p style={{ fontSize: 12, color: "#64748b", marginBottom: 3 }}>{c.institution}</p>}
+                  <div className="mini-divider" />
+                  <div className="mini-row">
+                    <span className="mini-label">Orders</span>
+                    <span className="mini-value">{c.count}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Total Billed</span>
+                    <span className="mini-value" style={{ color: "#2563eb", fontWeight: 800 }}>₹{c.total.toLocaleString()}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Mobile</span>
+                    <span className="mini-value" style={{ color: "#64748b", fontWeight: 400 }}>{c.mobile ? `+91 ${c.mobile}` : "—"}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Last Invoice</span>
+                    <span className="mini-value" style={{ color: "#64748b", fontWeight: 400 }}>{new Date(c.lastInvoice).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -397,9 +472,9 @@ function InventoryTab({ invoices }: { invoices: Invoice[] }) {
   }, [invoices]);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="tab-content">
       <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
           <Package size={16} color="#3b82f6" />
           <span style={{ fontWeight: 700, fontSize: 14 }}>Inventory / Items ({items.length})</span>
         </div>
@@ -409,28 +484,52 @@ function InventoryTab({ invoices }: { invoices: Invoice[] }) {
             <p style={{ marginTop: 12, color: "#94a3b8", fontSize: 14 }}>No items found — add items in invoices</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="inv-table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: "default" }}>#</th>
-                  <th style={{ cursor: "default" }}>Item / Dress Name</th>
-                  <th style={{ cursor: "default" }}>Times Rented</th>
-                  <th style={{ cursor: "default" }}>Total Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, i) => (
-                  <tr key={i}>
-                    <td style={{ color: "#94a3b8", fontSize: 12 }}>{i + 1}</td>
-                    <td style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>{item.name}</td>
-                    <td style={{ fontSize: 13, fontWeight: 600 }}>{item.timesRented} qty</td>
-                    <td style={{ fontWeight: 700, color: "#2563eb", fontSize: 14 }}>₹{item.totalRevenue.toLocaleString()}</td>
+          <>
+            {/* Desktop table */}
+            <div className="desktop-table" style={{ overflowX: "auto" }}>
+              <table className="inv-table">
+                <thead>
+                  <tr>
+                    <th style={{ cursor: "default" }}>#</th>
+                    <th style={{ cursor: "default" }}>Item / Dress Name</th>
+                    <th style={{ cursor: "default" }}>Times Rented</th>
+                    <th style={{ cursor: "default" }}>Total Revenue</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {items.map((item, i) => (
+                    <tr key={i}>
+                      <td style={{ color: "#94a3b8", fontSize: 12 }}>{i + 1}</td>
+                      <td style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>{item.name}</td>
+                      <td style={{ fontSize: 13, fontWeight: 600 }}>{item.timesRented} qty</td>
+                      <td style={{ fontWeight: 700, color: "#2563eb", fontSize: 14 }}>₹{item.totalRevenue.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="mobile-cards">
+              {items.map((item, i) => (
+                <div key={i} className="mini-card">
+                  <div className="mini-row" style={{ marginBottom: 2 }}>
+                    <span style={{ color: "#94a3b8", fontSize: 12 }}>#{i + 1}</span>
+                  </div>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", marginBottom: 8 }}>{item.name}</p>
+                  <div className="mini-divider" />
+                  <div className="mini-row">
+                    <span className="mini-label">Times Rented</span>
+                    <span className="mini-value">{item.timesRented} qty</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Total Revenue</span>
+                    <span className="mini-value" style={{ color: "#2563eb", fontWeight: 800 }}>₹{item.totalRevenue.toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -454,8 +553,8 @@ function AnalyticsTab({ invoices }: { invoices: Invoice[] }) {
   const total = invoices.reduce((s, i) => s + i.amount, 0);
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
+    <div className="tab-content">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14 }}>
         {/* By Status */}
         <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8 }}>
@@ -539,9 +638,9 @@ function PaymentsTab({ invoices }: { invoices: Invoice[] }) {
   const paid = invoices.filter(i => i.status === "Paid").sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="tab-content">
       <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <CreditCard size={16} color="#3b82f6" />
             <span style={{ fontWeight: 700, fontSize: 14 }}>Collected Payments ({paid.length})</span>
@@ -556,32 +655,61 @@ function PaymentsTab({ invoices }: { invoices: Invoice[] }) {
             <p style={{ marginTop: 12, color: "#94a3b8", fontSize: 14 }}>No payments collected yet</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="inv-table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: "default" }}>Invoice #</th>
-                  <th style={{ cursor: "default" }}>Customer</th>
-                  <th style={{ cursor: "default" }}>Amount</th>
-                  <th style={{ cursor: "default" }}>Deposit</th>
-                  <th style={{ cursor: "default" }}>Payment Mode</th>
-                  <th style={{ cursor: "default" }}>Due Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paid.map(inv => (
-                  <tr key={inv._id}>
-                    <td style={{ fontWeight: 700, color: "#3b82f6", fontSize: 13 }}>{inv.invoiceNumber}</td>
-                    <td style={{ fontWeight: 500, fontSize: 13 }}>{inv.customerName}</td>
-                    <td style={{ fontWeight: 700, color: "#15803d", fontSize: 14 }}>₹{inv.amount.toLocaleString()}</td>
-                    <td style={{ fontSize: 13, color: "#64748b" }}>{inv.depositAmount ? `₹${inv.depositAmount.toLocaleString()}` : "—"}</td>
-                    <td style={{ fontSize: 12, color: "#64748b" }}>{inv.paymentMode}</td>
-                    <td style={{ fontSize: 12, color: "#64748b" }}>{new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+          <>
+            {/* Desktop table */}
+            <div className="desktop-table" style={{ overflowX: "auto" }}>
+              <table className="inv-table">
+                <thead>
+                  <tr>
+                    <th style={{ cursor: "default" }}>Invoice #</th>
+                    <th style={{ cursor: "default" }}>Customer</th>
+                    <th style={{ cursor: "default" }}>Amount</th>
+                    <th style={{ cursor: "default" }}>Deposit</th>
+                    <th style={{ cursor: "default" }}>Payment Mode</th>
+                    <th style={{ cursor: "default" }}>Due Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paid.map(inv => (
+                    <tr key={inv._id}>
+                      <td style={{ fontWeight: 700, color: "#3b82f6", fontSize: 13 }}>{inv.invoiceNumber}</td>
+                      <td style={{ fontWeight: 500, fontSize: 13 }}>{inv.customerName}</td>
+                      <td style={{ fontWeight: 700, color: "#15803d", fontSize: 14 }}>₹{inv.amount.toLocaleString()}</td>
+                      <td style={{ fontSize: 13, color: "#64748b" }}>{inv.depositAmount ? `₹${inv.depositAmount.toLocaleString()}` : "—"}</td>
+                      <td style={{ fontSize: 12, color: "#64748b" }}>{inv.paymentMode}</td>
+                      <td style={{ fontSize: 12, color: "#64748b" }}>{new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="mobile-cards">
+              {paid.map(inv => (
+                <div key={inv._id} className="mini-card">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, color: "#3b82f6", fontSize: 12 }}>{inv.invoiceNumber}</span>
+                    <span style={{ fontWeight: 700, color: "#15803d", fontSize: 14 }}>₹{inv.amount.toLocaleString()}</span>
+                  </div>
+                  <p style={{ fontWeight: 600, fontSize: 13, color: "#0f172a", marginBottom: 6 }}>{inv.customerName}</p>
+                  <div className="mini-divider" />
+                  <div className="mini-row">
+                    <span className="mini-label">Deposit</span>
+                    <span className="mini-value">{inv.depositAmount ? `₹${inv.depositAmount.toLocaleString()}` : "—"}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Payment Mode</span>
+                    <span className="mini-value" style={{ color: "#64748b", fontWeight: 500 }}>{inv.paymentMode}</span>
+                  </div>
+                  <div className="mini-row">
+                    <span className="mini-label">Due Date</span>
+                    <span className="mini-value" style={{ color: "#64748b", fontWeight: 500 }}>{new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -634,8 +762,8 @@ function ExportTab({ invoices }: { invoices: Invoice[] }) {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14 }}>
+    <div className="tab-content">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 12 }}>
         {[
           { title: "All Invoices", desc: `Export all ${invoices.length} invoices as CSV`, action: exportAll, count: invoices.length, color: "#eff6ff", border: "#bfdbfe", icon: <Download size={20} color="#3b82f6" /> },
           { title: "Paid Invoices", desc: `Export ${invoices.filter(i => i.status === "Paid").length} paid invoices`, action: exportPaid, count: invoices.filter(i => i.status === "Paid").length, color: "#f0fdf4", border: "#bbf7d0", icon: <CheckCircle2 size={20} color="#16a34a" /> },
@@ -740,9 +868,9 @@ function InvoicesTab({ invoices, onRefresh, onCreateNew, loading }: {
 
   return (
     <>
-      <div style={{ padding: 24 }}>
+      <div className="tab-content">
         {/* Filters bar */}
-        <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           {/* Search */}
           <div className="search-wrap" style={{ flex: "1 1 200px", minWidth: 0 }}>
             <Search size={14} className="search-icon" />
@@ -770,18 +898,18 @@ function InvoicesTab({ invoices, onRefresh, onCreateNew, loading }: {
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-            <Button variant="outline" size="sm" onPress={onRefresh}>
+          <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+            <Button variant="outline" size="sm" onPress={onRefresh} style={{ minWidth: 0 }}>
               <RefreshCcw size={13} />
-              <span className="hide-xs">Refresh</span>
+              <span className="hide-xs" style={{ marginLeft: 3 }}>Refresh</span>
             </Button>
-            <Button variant="outline" size="sm" onPress={exportCSV}>
+            <Button variant="outline" size="sm" onPress={exportCSV} style={{ minWidth: 0 }}>
               <Download size={13} />
-              <span className="hide-xs">Export</span>
+              <span className="hide-xs" style={{ marginLeft: 3 }}>Export</span>
             </Button>
-            <Button variant="primary" size="sm" onPress={() => { setEditInvoice(null); setFormOpen(true); }}>
+            <Button variant="primary" size="sm" onPress={() => { setEditInvoice(null); setFormOpen(true); }} style={{ minWidth: 0 }}>
               <Plus size={13} />
-              <span className="hide-xs">New Invoice</span>
+              <span className="hide-xs" style={{ marginLeft: 3 }}>New Invoice</span>
             </Button>
           </div>
         </div>
@@ -919,13 +1047,25 @@ function InvoicesTab({ invoices, onRefresh, onCreateNew, loading }: {
                     <StatusBadge status={inv.status} />
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 10, fontSize: 11, color: "#94a3b8", marginBottom: 12, flexWrap: "wrap" }}>
-                  <span>📅 {new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-                  <span>💳 {inv.paymentMode}</span>
-                  {inv.mobile && <span>📞 {inv.mobile}</span>}
+                <div style={{ display: "flex", gap: 10, fontSize: 11, color: "#94a3b8", marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {new Date(inv.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    {inv.paymentMode}
+                  </span>
+                  {inv.mobile && <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    {inv.mobile}
+                  </span>}
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <Button variant="outline" size="sm" onPress={() => setViewInvoice(inv)} style={{ flex: 1 }}>View</Button>
+                  <button className="card-whatsapp-btn" onClick={() => shareOnWhatsApp(inv)}>
+                    <Share2 size={11} /> Share
+                  </button>
                   <Button variant="outline" size="sm" onPress={() => { setEditInvoice(inv); setFormOpen(true); }} style={{ flex: 1 }}>Edit</Button>
                   <Button variant="danger" size="sm" onPress={() => setDeleteId(inv._id)} style={{ flex: 1 }}>Delete</Button>
                 </div>
@@ -1012,9 +1152,9 @@ export default function BillingDashboard() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontWeight: 800, fontSize: 18, color: "#0f172a", margin: 0 }}>{tabTitles[activeTab]}</h1>
-            <p style={{ fontSize: 12, color: "#94a3b8", margin: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontWeight: 800, fontSize: 16, color: "#0f172a", margin: 0 }} className="page-title">{tabTitles[activeTab]}</h1>
+            <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }} className="page-date">
               {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>

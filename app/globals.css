@@ -58,6 +58,9 @@ body {
   .sidebar-overlay.open { display: block; }
   .main-content { margin-left: 0; }
 }
+@media (min-width: 1025px) {
+  .lg-hidden { display: none !important; }
+}
 
 /* ─── Sidebar nav items ─── */
 .nav-item {
@@ -356,14 +359,96 @@ body {
 .page-header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
-  padding: 14px 24px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   position: sticky;
   top: 0;
   z-index: 30;
 }
+@media (min-width: 640px) {
+  .page-header { padding: 14px 24px; gap: 14px; }
+}
+
+/* ─── Tab content responsive padding ─── */
+.tab-content { padding: 16px; }
+@media (min-width: 640px) { .tab-content { padding: 24px; } }
+
+/* ─── Modal responsive ─── */
+@media (max-width: 639px) {
+  .modal-box { max-width: 100% !important; border-radius: 12px !important; margin: 8px !important; }
+  .modal-box.modal-lg { max-width: 100% !important; }
+  .modal-body { padding: 16px !important; max-height: 75vh !important; }
+  .modal-header { padding: 14px 16px !important; }
+  .modal-footer { padding: 12px 16px !important; }
+}
+@media (max-width: 480px) {
+  .modal-box { margin: 4px !important; border-radius: 8px !important; }
+}
+
+/* ─── Desktop table / Mobile card swap for all tabs ─── */
+@media (max-width: 768px) {
+  .desktop-table { display: none; }
+  .mobile-cards  { display: flex; flex-direction: column; gap: 10px; }
+}
+@media (min-width: 769px) {
+  .desktop-table { display: block; }
+  .mobile-cards  { display: none; }
+}
+
+/* ─── Mini card for tables (customers, inventory, payments) ─── */
+.mini-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  transition: box-shadow 0.15s;
+}
+.mini-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.mini-card .mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.mini-card .mini-label {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mini-card .mini-value {
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+}
+.mini-card .mini-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 0;
+}
+
+/* ─── Mobile card WhatsApp row ─── */
+.card-whatsapp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #25D366;
+  color: #25D366;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+}
+.card-whatsapp-btn:hover { background: #25D366; color: white; }
 
 /* ─── Empty state ─── */
 .empty-state {
@@ -384,4 +469,25 @@ body {
 /* ─── Misc ─── */
 @media (max-width: 480px) {
   .hide-xs { display: none !important; }
+  .page-title { font-size: 14px !important; }
+  .page-date { font-size: 10px !important; }
+  .stat-card { padding: 14px !important; }
+  .stat-card p:first-of-type { font-size: 18px !important; }
+}
+
+/* ─── Hide full date on very small screens ─── */
+@media (max-width: 360px) {
+  .page-date { display: none; }
+}
+
+/* ─── Better touch targets for mobile ─── */
+@media (max-width: 768px) {
+  .nav-item { padding: 11px 12px !important; font-size: 14px !important; }
+  .f-input { font-size: 16px !important; } /* Prevents iOS zoom */
+  button, .f-input, select { touch-action: manipulation; }
+}
+
+/* ─── Smooth scroll on mobile ─── */
+@media (max-width: 1024px) {
+  html { scroll-behavior: smooth; }
 }
