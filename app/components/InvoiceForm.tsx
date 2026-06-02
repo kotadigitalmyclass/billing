@@ -160,9 +160,9 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px", background: "#f8fafc", display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Section 1: Invoice Info */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px", background: "#f8fafc" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, minHeight: "min-content" }}>
+            {/* Section 1: Invoice Info */}
           <div className="f-section">
             <div className="f-section-header">
               <FileText size={14} color="#64748b" />
@@ -237,7 +237,7 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
               </Button>
             </div>
             <div style={{ overflowX: "auto" }}>
-              <table className="inv-table" style={{ marginBottom: 0 }}>
+              <table className="inv-table" style={{ marginBottom: 0, minWidth: 600 }}>
                 <thead>
                   <tr>
                     <th style={{ cursor: "default", width: 36 }}>#</th>
@@ -352,6 +352,7 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Footer */}
