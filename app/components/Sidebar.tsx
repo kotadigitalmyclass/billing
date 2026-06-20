@@ -10,7 +10,10 @@ import {
   CreditCard,
   Download,
   X,
+  LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -34,6 +37,7 @@ const reportItems = [
 ];
 
 export default function Sidebar({ isOpen, onClose, activeTab, onTabChange, pendingCount }: SidebarProps) {
+  const router = useRouter();
   const handleNav = (id: string) => {
     onTabChange(id);
     onClose();
@@ -125,17 +129,33 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange, pendi
 
         {/* Footer */}
         <div style={{ padding: "12px 16px", borderTop: "1px solid #e2e8f0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: "50%",
-              background: "linear-gradient(135deg, #3b82f6, #6366f1)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "white", fontSize: 13, fontWeight: 700, flexShrink: 0,
-            }}>A</div>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Admin</p>
-              <p style={{ fontSize: 11, color: "#94a3b8" }}>Billing Manager</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "white", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>A</div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Admin</p>
+                <p style={{ fontSize: 11, color: "#94a3b8" }}>Billing Manager</p>
+              </div>
             </div>
+            <button
+              onClick={async () => {
+                await authClient.signOut();
+                router.push('/login');
+              }}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: "#ef4444", padding: 6, borderRadius: 6,
+                display: "flex", alignItems: "center",
+              }}
+              title="Sign Out"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </aside>

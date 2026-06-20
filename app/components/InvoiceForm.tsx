@@ -27,6 +27,7 @@ interface ExistingInvoice {
   deliveryDate?: string;
   depositDate?: string;
   depositAmount?: number;
+  securityDeposit?: number;
   status?: string;
   paymentMode?: string;
   notes?: string;
@@ -40,14 +41,17 @@ interface Props {
   existingInvoice?: ExistingInvoice | null;
 }
 
-const fmtDate = (d?: string | null) => (d ? new Date(d).toISOString().split("T")[0] : "");
+const fmtDate = (d?: string | null) => {
+  if (d) return new Date(d).toISOString().split("T")[0];
+  const today = new Date();
+  return new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+};
 
 export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existingInvoice }: Props) {
   const isEdit = !!existingInvoice?._id;
 
   const [invoiceNo, setInvoiceNo]       = React.useState(existingInvoice?.invoiceNumber ?? "");
   const [invoiceDate, setInvoiceDate]   = React.useState(fmtDate(existingInvoice?.invoiceDate));
-  const [dueDate, setDueDate]           = React.useState(fmtDate(existingInvoice?.dueDate));
   const [deliveryDate, setDeliveryDate] = React.useState(fmtDate(existingInvoice?.deliveryDate));
   const [depositDate, setDepositDate]   = React.useState(fmtDate(existingInvoice?.depositDate));
   const [status, setStatus]             = React.useState(existingInvoice?.status ?? "Pending");
@@ -57,6 +61,7 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
   const [address, setAddress]           = React.useState(existingInvoice?.address ?? "");
   const [institution, setInstitution]   = React.useState(existingInvoice?.institution ?? "");
   const [depositAmount, setDepositAmount] = React.useState(existingInvoice?.depositAmount ? String(existingInvoice.depositAmount) : "");
+  const [securityDeposit, setSecurityDeposit] = React.useState(existingInvoice?.securityDeposit ? String(existingInvoice.securityDeposit) : "");
   const [notes, setNotes]               = React.useState(existingInvoice?.notes ?? "");
   const [loading, setLoading]           = React.useState(false);
   const [errors, setErrors]             = React.useState<Record<string, string>>({});
@@ -73,7 +78,7 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
       : [{ id: 1, description: "", quantity: "1", rate: "", amount: "" }]
   );
 
-  const total = items.reduce((s, it) => s + Number(it.amount || 0), 0);
+  const total = items.reduce((s, it) => s + Number(it.amount || 0), 0) + Number(securityDeposit || 0);
   const balance = total - Number(depositAmount || 0);
 
   const updateItem = (id: number, field: string, value: string) => {
@@ -96,9 +101,7 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!invoiceNo.trim()) e.invoiceNo = "Required";
     if (!customerName.trim()) e.customerName = "Required";
-    if (!dueDate) e.dueDate = "Required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -114,10 +117,10 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
         address: address.trim(),
         mobile: mobile.trim(),
         invoiceDate: invoiceDate ? new Date(invoiceDate).toISOString() : undefined,
-        dueDate: new Date(dueDate).toISOString(),
         deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined,
         depositDate: depositDate ? new Date(depositDate).toISOString() : undefined,
         depositAmount: Number(depositAmount) || 0,
+        securityDeposit: Number(securityDeposit) || 0,
         amount: total,
         status,
         paymentMode,
@@ -170,17 +173,13 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
             </div>
             <div className="f-section-body">
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
-                <Fld label="Invoice No. *" error={errors.invoiceNo}>
+                <Fld label="Invoice No." error={errors.invoiceNo}>
                   <input className={`f-input ${errors.invoiceNo ? "error" : ""}`} value={invoiceNo}
                     onChange={e => { setInvoiceNo(e.target.value); setErrors(p => ({ ...p, invoiceNo: "" })); }}
-                    placeholder="INV-001" />
+                    placeholder="Auto-generated" />
                 </Fld>
                 <Fld label="Invoice Date">
                   <input className="f-input" type="date" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} />
-                </Fld>
-                <Fld label="Due Date *" error={errors.dueDate}>
-                  <input className={`f-input ${errors.dueDate ? "error" : ""}`} type="date" value={dueDate}
-                    onChange={e => { setDueDate(e.target.value); setErrors(p => ({ ...p, dueDate: "" })); }} />
                 </Fld>
                 <Fld label="Status">
                   <select className="f-input f-select" value={status} onChange={e => setStatus(e.target.value)}>
@@ -299,9 +298,13 @@ export default function InvoiceForm({ isOpen, onClose, onInvoiceCreated, existin
                     <option value="Cheque">Cheque</option>
                   </select>
                 </Fld>
-                <Fld label="Deposit Amount (₹)">
+                <Fld label="Advance Deposit (₹)">
                   <input className="f-input" type="number" min="0" value={depositAmount}
                     onChange={e => setDepositAmount(e.target.value)} placeholder="e.g. 500" />
+                </Fld>
+                <Fld label="Security Deposit (₹)">
+                  <input className="f-input" type="number" min="0" value={securityDeposit}
+                    onChange={e => setSecurityDeposit(e.target.value)} placeholder="e.g. 1000" />
                 </Fld>
                 <Fld label="Delivery Date">
                   <input className="f-input" type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />

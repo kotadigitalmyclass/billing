@@ -21,9 +21,25 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const body = await request.json();
     
+    let finalInvoiceNumber = body.invoiceNumber;
+    if (!finalInvoiceNumber || finalInvoiceNumber.trim() === '') {
+      const lastInvoice = await InvoiceModel.findOne({ invoiceNumber: { $regex: /^INV-\d+$/ } }).sort({ createdAt: -1 });
+      if (lastInvoice && lastInvoice.invoiceNumber) {
+        const match = lastInvoice.invoiceNumber.match(/\d+$/);
+        if (match) {
+          const nextNum = parseInt(match[0], 10) + 1;
+          finalInvoiceNumber = `INV-${nextNum}`;
+        } else {
+          finalInvoiceNumber = `INV-1001`;
+        }
+      } else {
+        finalInvoiceNumber = `INV-1001`;
+      }
+    }
+
     const invoice = new InvoiceModel({
       ...body,
-      invoiceNumber: body.invoiceNumber || `INV-${Date.now()}`,
+      invoiceNumber: finalInvoiceNumber,
     });
 
     const savedInvoice = await invoice.save();

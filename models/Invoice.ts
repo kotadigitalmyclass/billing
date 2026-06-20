@@ -16,11 +16,12 @@ export interface IInvoice extends Document {
   mobile?: string;
   amount: number;
   status: "Paid" | "Pending" | "Overdue" | "Cancelled";
-  dueDate: Date;
+  dueDate?: Date;
   invoiceDate: Date;
   deliveryDate?: Date;
   depositDate?: Date;
   depositAmount: number;
+  securityDeposit: number;
   items: IItem[];
   notes?: string;
   paymentMode: "Cash" | "Online" | "Cheque";
@@ -65,13 +66,14 @@ const invoiceSchema = new Schema<IInvoice>(
       index: true,
     },
 
-    dueDate: { type: Date, required: true },
+    dueDate: { type: Date },
     invoiceDate: { type: Date, default: Date.now },
 
     deliveryDate: Date,
     depositDate: Date,
 
     depositAmount: { type: Number, default: 0 },
+    securityDeposit: { type: Number, default: 0 },
 
     items: {
       type: [itemSchema],
@@ -95,9 +97,9 @@ const invoiceSchema = new Schema<IInvoice>(
 
 invoiceSchema.pre<IInvoice>("save", function (next) {
   if (this.items?.length) {
-    this.amount = this.items.reduce((sum, item) => sum + item.amount, 0);
+    this.amount = this.items.reduce((sum, item) => sum + item.amount, 0) + (this.securityDeposit || 0);
   }
-  // next();
+  next();
 });
 
 
