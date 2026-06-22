@@ -99,7 +99,6 @@ invoiceSchema.pre<IInvoice>("save", function (next) {
   if (this.items?.length) {
     this.amount = this.items.reduce((sum, item) => sum + item.amount, 0) + (this.securityDeposit || 0);
   }
-  next();
 });
 
 
