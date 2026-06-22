@@ -7,14 +7,15 @@ if (!process.env.MONGODB_URI) {
 }
 
 const client = new MongoClient(process.env.MONGODB_URI);
-const db = client.db(); 
+const db = client.db();
 
 export const auth = betterAuth({
-  secret: process.env.JWT_SECRET || process.env.BETTER_AUTH_SECRET,
   database: mongodbAdapter(db, {
-    client, 
+    client,
   }),
   emailAndPassword: {
     enabled: true,
   },
 });
+
+

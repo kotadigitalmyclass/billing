@@ -20,7 +20,8 @@ export default function LoginPage() {
     setError("");
 
     const { error } = await authClient.signIn.email({
-      email: email || "admin@example.com",
+      name: "Admin",
+      email: email,
       password: password,
     });
 
